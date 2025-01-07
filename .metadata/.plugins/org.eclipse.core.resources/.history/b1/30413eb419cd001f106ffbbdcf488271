@@ -1,0 +1,83 @@
+package processors;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * WordMapper is a class that processes words and maps them to their corresponding embeddings.
+ * It extends the AbstractProcessor class.
+ */
+public class WordMapper extends AbstractProcessor {
+
+    private Map<String, double[]> embeddingsMap = new ConcurrentHashMap<>();
+    private Map<String, Object> wordSet = new ConcurrentHashMap<>();
+    private Map<String, double[]> wordMap = new ConcurrentHashMap<>();
+
+    /**
+     * Sets the embeddings map.
+     *
+     * @param m a map where the key is a word and the value is its corresponding embedding.
+     */
+    public void setEmbeddings(Map<String, double[]> m) {
+        this.embeddingsMap = m;
+    }
+
+    /**
+     * Sets the word set.
+     *
+     * @param w a set of words to be processed.
+     */
+    public void setWords(Map<String, Object> w) {
+        this.wordSet = new ConcurrentHashMap<String, Object>(w);
+    }
+
+    /**
+     * Creates the word map by processing each word in the word set.
+     * Uses a virtual thread per task executor to process words concurrently.
+     */
+    public void createWordMap() {
+        try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
+            wordSet.keySet().forEach(word -> {
+                pool.execute(() -> {
+                    process(word);
+                });
+            });
+            pool.shutdown();
+            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Returns an unmodifiable view of the word map.
+     *
+     * @return a map where the key is a word and the value is its corresponding embedding.
+     */
+    public Map<String, double[]> wordMap() {
+        return Map.copyOf(wordMap);
+    }
+
+    /**
+     * Processes a line (word) and adds it to the word map if it exists in the embeddings map.
+     *
+     * @param line the word to be processed.
+     */
+    @Override
+    public void process(String line) {
+        if (embeddingsMap.containsKey(line)) {
+            wordMap.put(line, embeddingsMap.get(line));
+        }
+    }
+
+    /**
+     * Clears the embeddings map and the word set.
+     */
+    @Override
+    public void clear() {
+        embeddingsMap = new ConcurrentHashMap<>();
+        wordSet = new ConcurrentHashMap<>();
+    }
+}

@@ -1,0 +1,56 @@
+package processors;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
+/**
+ * A class that reads and processes a document, removing symbols and numbers.
+ */
+public class DocumentProcessor extends AbstractProcessor {
+
+    private String text = "";
+
+    /**
+     * Returns the text of the document.
+     * 
+     * @return the text of the document
+     */
+    public String text() {
+        return this.text;
+    }
+
+    /**
+     * Stores the content of the file specified by the file name.
+     * Clears any existing text before processing the file.
+     * 
+     * @param fileName the name of the file to be processed
+     * @throws IOException 
+     */
+    @Override
+    public void store(String fileName) throws IOException, InterruptedException {
+        clear();
+        var file = new File(fileName);
+        Files.lines(file.toPath()).forEach(line -> {
+        	process(line);
+        });
+    }
+
+    /**
+     * Processes a line of text and appends it to the document text.
+     * 
+     * @param line the line of text to be processed
+     */
+    @Override
+    public void process(String line) {
+        text += (line + "\n");
+    }
+
+    /**
+     * Clears the text of the document.
+     */
+    @Override
+    public void clear() {
+        text = "";
+    }
+}
