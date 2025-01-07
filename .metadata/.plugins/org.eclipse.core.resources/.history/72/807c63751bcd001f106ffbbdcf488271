@@ -1,0 +1,9 @@
+package main;
+
+import processors.ImageProcessor;
+
+public class Runner {
+	public static void main(String[] args) {
+		new ImageProcessor().store("blackrock.jpg")
+	}
+}
